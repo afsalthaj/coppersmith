@@ -34,6 +34,34 @@ trait ScaldingLift extends Lift[TypedPipe] {
     s.flatMap(s => fs.generate(s))
   }
 
+  def liftJoinInnerInner[S1, S2, S3, J1 : Ordering, J2 : Ordering](
+    joined3: Joined3[S1, S2, S3, J1, J2, (S1, S2), (S1, S2, S3)]
+  )(s1: TypedPipe[S1], s2: TypedPipe[S2], s3: TypedPipe[S3]): TypedPipe[(S1, S2, S3)] = {
+    s1.groupBy(joined3.s1j1).join(s2.groupBy(joined3.s2j1)).values
+      .groupBy(joined3.s12j2).join(s3.groupBy(joined3.s3j2)).values
+      .map { case ((s1, s2), s3) => (s1, s2, s3) }
+  }
+  def liftJoinInnerLeft[S1, S2, S3, J1 : Ordering, J2 : Ordering](
+    joined3: Joined3[S1, S2, S3, J1, J2, (S1, S2), (S1, S2, Option[S3])]
+  )(s1: TypedPipe[S1], s2: TypedPipe[S2], s3: TypedPipe[S3]): TypedPipe[(S1, S2, Option[S3])] = {
+    s1.groupBy(joined3.s1j1).join(s2.groupBy(joined3.s2j1)).values
+      .groupBy(joined3.s12j2).leftJoin(s3.groupBy(joined3.s3j2)).values
+      .map { case ((s1, s2), s3) => (s1, s2, s3) }
+  }
+  def liftJoinLeftInner[S1, S2, S3, J1 : Ordering, J2 : Ordering](
+    joined3: Joined3[S1, S2, S3, J1, J2, (S1, Option[S2]), (S1, Option[S2], S3)]
+  )(s1: TypedPipe[S1], s2: TypedPipe[S2], s3: TypedPipe[S3]): TypedPipe[(S1, Option[S2], S3)] = {
+    s1.groupBy(joined3.s1j1).leftJoin(s2.groupBy(joined3.s2j1)).values
+      .groupBy(joined3.s12j2).join(s3.groupBy(joined3.s3j2)).values
+      .map { case ((s1, s2), s3) => (s1, s2, s3) }
+  }
+  def liftJoinLeftLeft[S1, S2, S3, J1 : Ordering, J2 : Ordering](
+    joined3: Joined3[S1, S2, S3, J1, J2, (S1, Option[S2]), (S1, Option[S2], Option[S3])]
+  )(s1: TypedPipe[S1], s2: TypedPipe[S2], s3: TypedPipe[S3]): TypedPipe[(S1, Option[S2], Option[S3])] = {
+    s1.groupBy(joined3.s1j1).leftJoin(s2.groupBy(joined3.s2j1)).values
+      .groupBy(joined3.s12j2).leftJoin(s3.groupBy(joined3.s3j2)).values
+      .map { case ((s1, s2), s3) => (s1, s2, s3) }
+  }
 
   def innerJoinNext[LeftSides <: HList, RightSide, J : Ordering, Out <: HList]
   (l: LeftSides => J, r: RightSide => J )

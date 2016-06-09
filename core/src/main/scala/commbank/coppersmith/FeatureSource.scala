@@ -82,6 +82,27 @@ trait SourceBinderInstances {
     (leftSrc: DataSource[L, P], rightSrc: DataSource[R, P]) =
     LeftJoinedBinder(leftSrc, rightSrc)
 
+  def joinInnerInner[S1, S2, S3, J1 : Ordering, J2 : Ordering, P[_] : Lift](
+    s1: DataSource[S1, P],
+    s2: DataSource[S2, P],
+    s3: DataSource[S3, P]
+  ) = Joined3InnerInnerBinder[S1, S2, S3, J1, J2, P](s1, s2, s3)
+  def joinInnerLeft[S1, S2, S3, J1 : Ordering, J2 : Ordering, P[_] : Lift](
+    s1: DataSource[S1, P],
+    s2: DataSource[S2, P],
+    s3: DataSource[S3, P]
+  ) = Joined3InnerLeftBinder[S1, S2, S3, J1, J2, P](s1, s2, s3)
+  def joinLeftInner[S1, S2, S3, J1 : Ordering, J2 : Ordering, P[_] : Lift](
+    s1: DataSource[S1, P],
+    s2: DataSource[S2, P],
+    s3: DataSource[S3, P]
+  ) = Joined3LeftInnerBinder[S1, S2, S3, J1, J2, P](s1, s2, s3)
+  def joinLeftLeft[S1, S2, S3, J1 : Ordering, J2 : Ordering, P[_] : Lift](
+    s1: DataSource[S1, P],
+    s2: DataSource[S2, P],
+    s3: DataSource[S3, P]
+  ) = Joined3LeftLeftBinder[S1, S2, S3, J1, J2, P](s1, s2, s3)
+
   def joinMulti[  //These come from parameters
     P[_] : Lift,
     Tuple <: Product,
@@ -165,6 +186,43 @@ case class LeftJoinedBinder[L, R, J : Ordering, P[_] : Lift](
 ) extends SourceBinder[(L, Option[R]), Joined[L, R, J, (L, Option[R])], P] {
   def bind(j: Joined[L, R, J, (L, Option[R])]): P[(L, Option[R])] = {
     implicitly[Lift[P]].liftLeftJoin(j)(leftSrc.load, rightSrc.load)
+  }
+}
+
+case class Joined3InnerInnerBinder[S1, S2, S3, J1 : Ordering, J2 : Ordering, P[_] : Lift](
+  s1: DataSource[S1, P],
+  s2: DataSource[S2, P],
+  s3: DataSource[S3, P]
+) extends SourceBinder[(S1, S2, S3), Joined3[S1, S2, S3, J1, J2, (S1, S2), (S1, S2, S3)], P] {
+  def bind(j: Joined3[S1, S2, S3, J1, J2, (S1, S2), (S1, S2, S3)]): P[(S1, S2, S3)] = {
+    implicitly[Lift[P]].liftJoinInnerInner(j)(s1.load, s2.load, s3.load)
+  }
+}
+case class Joined3InnerLeftBinder[S1, S2, S3, J1 : Ordering, J2 : Ordering, P[_] : Lift](
+  s1: DataSource[S1, P],
+  s2: DataSource[S2, P],
+  s3: DataSource[S3, P]
+) extends SourceBinder[(S1, S2, Option[S3]), Joined3[S1, S2, S3, J1, J2, (S1, S2), (S1, S2, Option[S3])], P] {
+  def bind(j: Joined3[S1, S2, S3, J1, J2, (S1, S2), (S1, S2, Option[S3])]): P[(S1, S2, Option[S3])] = {
+    implicitly[Lift[P]].liftJoinInnerLeft(j)(s1.load, s2.load, s3.load)
+  }
+}
+case class Joined3LeftInnerBinder[S1, S2, S3, J1 : Ordering, J2 : Ordering, P[_] : Lift](
+  s1: DataSource[S1, P],
+  s2: DataSource[S2, P],
+  s3: DataSource[S3, P]
+) extends SourceBinder[(S1, Option[S2], S3), Joined3[S1, S2, S3, J1, J2, (S1, Option[S2]), (S1, Option[S2], S3)], P] {
+  def bind(j: Joined3[S1, S2, S3, J1, J2, (S1, Option[S2]), (S1, Option[S2], S3)]): P[(S1, Option[S2], S3)] = {
+    implicitly[Lift[P]].liftJoinLeftInner(j)(s1.load, s2.load, s3.load)
+  }
+}
+case class Joined3LeftLeftBinder[S1, S2, S3, J1 : Ordering, J2 : Ordering, P[_] : Lift](
+  s1: DataSource[S1, P],
+  s2: DataSource[S2, P],
+  s3: DataSource[S3, P]
+) extends SourceBinder[(S1, Option[S2], Option[S3]), Joined3[S1, S2, S3, J1, J2, (S1, Option[S2]), (S1, Option[S2], Option[S3])], P] {
+  def bind(j: Joined3[S1, S2, S3, J1, J2, (S1, Option[S2]), (S1, Option[S2], Option[S3])]): P[(S1, Option[S2], Option[S3])] = {
+    implicitly[Lift[P]].liftJoinLeftLeft(j)(s1.load, s2.load, s3.load)
   }
 }
 

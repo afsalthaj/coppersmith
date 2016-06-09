@@ -31,6 +31,20 @@ trait MemoryLift extends Lift[List] {
     s.flatMap(s => fs.generate(s))
   }
 
+  def liftJoinInnerInner[S1, S2, S3, J1 : Ordering, J2 : Ordering](
+    joined3: Joined3[S1, S2, S3, J1, J2, (S1, S2), (S1, S2, S3)]
+  )(s1: List[S1], s2: List[S2], s3: List[S3]): List[(S1, S2, S3)] = sys.error("FIXME: Implement")
+  def liftJoinInnerLeft[S1, S2, S3, J1 : Ordering, J2 : Ordering](
+    joined3: Joined3[S1, S2, S3, J1, J2, (S1, S2), (S1, S2, Option[S3])]
+  )(s1: List[S1], s2: List[S2], s3: List[S3]): List[(S1, S2, Option[S3])] = sys.error("FIXME: Implement")
+  def liftJoinLeftInner[S1, S2, S3, J1 : Ordering, J2 : Ordering](
+    joined3: Joined3[S1, S2, S3, J1, J2, (S1, Option[S2]), (S1, Option[S2], S3)]
+  )(s1: List[S1], s2: List[S2], s3: List[S3]): List[(S1, Option[S2], S3)] = sys.error("FIXME: Implement")
+  def liftJoinLeftLeft[S1, S2, S3, J1 : Ordering, J2 : Ordering](
+    joined3: Joined3[S1, S2, S3, J1, J2, (S1, Option[S2]), (S1, Option[S2], Option[S3])]
+  )(s1: List[S1], s2: List[S2], s3: List[S3]): List[(S1, Option[S2], Option[S3])] = sys.error("FIXME: Implement")
+
+
   type +:[A <: HList, B] =  Prepend[A, B :: HNil]
 
 

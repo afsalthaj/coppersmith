@@ -48,7 +48,6 @@ abstract class Lift[P[_]](implicit val functor: Functor[P]) {
   (implicit pp: Prepend.Aux[LeftSides, Option[RightSide] :: HNil, Out])
   : P[Out]
 
-
   //two is a special case, a little easier to do than the general case
   def liftJoin[A, B, J : Ordering]
     (joined: Joined[A, B, J, (A, B)])
@@ -63,6 +62,24 @@ abstract class Lift[P[_]](implicit val functor: Functor[P]) {
     leftJoinNext((l: A :: HNil) =>
       joined.left(l.head), joined.right)(a.map(_ :: HNil), b).map(_.tupled)
   }
+
+  def liftJoinInnerInner[S1, S2, S3, J1 : Ordering, J2 : Ordering](
+    joined3: Joined3[S1, S2, S3, J1, J2, (S1, S2), (S1, S2, S3)]
+  )(s1:P[S1], s2: P[S2], s3: P[S3]): P[(S1, S2, S3)]/* = {
+    innerJoinNext((l: A :: HNil) =>
+      joined.l(l.head), joined.r)(a.map(_ :: HNil), b).map(_.tupled)
+  }
+ */
+  def liftJoinInnerLeft[S1, S2, S3, J1 : Ordering, J2 : Ordering](
+    joined3: Joined3[S1, S2, S3, J1, J2, (S1, S2), (S1, S2, Option[S3])]
+  )(s1:P[S1], s2: P[S2], s3: P[S3]): P[(S1, S2, Option[S3])]
+  def liftJoinLeftInner[S1, S2, S3, J1 : Ordering, J2 : Ordering](
+    joined3: Joined3[S1, S2, S3, J1, J2, (S1, Option[S2]), (S1, Option[S2], S3)]
+  )(s1:P[S1], s2: P[S2], s3: P[S3]): P[(S1, Option[S2], S3)]
+  def liftJoinLeftLeft[S1, S2, S3, J1 : Ordering, J2 : Ordering](
+    joined3: Joined3[S1, S2, S3, J1, J2, (S1, Option[S2]), (S1, Option[S2], Option[S3])]
+  )(s1:P[S1], s2: P[S2], s3: P[S3]): P[(S1, Option[S2], Option[S3])]
+
 
   def liftMultiwayJoin[ //type examples as comments for better readability
   InTuple <: Product, // (List[A], List[B], List[C])

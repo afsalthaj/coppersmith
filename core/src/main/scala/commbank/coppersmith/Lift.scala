@@ -64,22 +64,25 @@ abstract class Lift[P[_]](implicit val functor: Functor[P])
       joined.left(l.head), joined.right)(a.map(_ :: HNil), b).map(_.tupled)
   }
 
+  // Three-way join permutations
   def liftJoinInnerInner[S1, S2, S3, J1 : Ordering, J2 : Ordering](
     joined3: Joined3[S1, S2, S3, J1, J2, (S1, S2), (S1, S2, S3)]
-  )(s1:P[S1], s2: P[S2], s3: P[S3]): P[(S1, S2, S3)]/* = {
-    innerJoinNext((l: A :: HNil) =>
-      joined.l(l.head), joined.r)(a.map(_ :: HNil), b).map(_.tupled)
-  }
- */
-  def liftJoinInnerLeft[S1, S2, S3, J1 : Ordering, J2 : Ordering](
-    joined3: Joined3[S1, S2, S3, J1, J2, (S1, S2), (S1, S2, Option[S3])]
-  )(s1:P[S1], s2: P[S2], s3: P[S3]): P[(S1, S2, Option[S3])]
+  )(s1:P[S1], s2: P[S2], s3: P[S3]): P[(S1, S2, S3)]
   def liftJoinLeftInner[S1, S2, S3, J1 : Ordering, J2 : Ordering](
     joined3: Joined3[S1, S2, S3, J1, J2, (S1, Option[S2]), (S1, Option[S2], S3)]
   )(s1:P[S1], s2: P[S2], s3: P[S3]): P[(S1, Option[S2], S3)]
+  def liftJoinInnerLeft[S1, S2, S3, J1 : Ordering, J2 : Ordering](
+    joined3: Joined3[S1, S2, S3, J1, J2, (S1, S2), (S1, S2, Option[S3])]
+  )(s1:P[S1], s2: P[S2], s3: P[S3]): P[(S1, S2, Option[S3])]
   def liftJoinLeftLeft[S1, S2, S3, J1 : Ordering, J2 : Ordering](
     joined3: Joined3[S1, S2, S3, J1, J2, (S1, Option[S2]), (S1, Option[S2], Option[S3])]
   )(s1:P[S1], s2: P[S2], s3: P[S3]): P[(S1, Option[S2], Option[S3])]
+
+  // Four-way join permutations
+  def liftJoinInnerLeftInner[S1, S2, S3, S4, J1 : Ordering, J2 : Ordering, J3 : Ordering](
+    joined4: Joined4[S1, S2, S3, S4, J1, J2, J3, (S1, S2), (S1, S2, Option[S3]), (S1, S2, Option[S3], S4)]
+  )(s1: P[S1], s2: P[S2], s3: P[S3], s4: P[S4]): P[(S1, S2, Option[S3], S4)]
+  // etc
 
 
   def liftMultiwayJoin[ //type examples as comments for better readability

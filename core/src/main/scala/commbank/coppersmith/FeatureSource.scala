@@ -82,26 +82,36 @@ trait SourceBinderInstances {
     (leftSrc: DataSource[L, P], rightSrc: DataSource[R, P]) =
     LeftJoinedBinder(leftSrc, rightSrc)
 
+  // Three-way join permutations
   def joinInnerInner[S1, S2, S3, J1 : Ordering, J2 : Ordering, P[_] : Lift](
     s1: DataSource[S1, P],
     s2: DataSource[S2, P],
     s3: DataSource[S3, P]
   ) = Joined3InnerInnerBinder[S1, S2, S3, J1, J2, P](s1, s2, s3)
-  def joinInnerLeft[S1, S2, S3, J1 : Ordering, J2 : Ordering, P[_] : Lift](
-    s1: DataSource[S1, P],
-    s2: DataSource[S2, P],
-    s3: DataSource[S3, P]
-  ) = Joined3InnerLeftBinder[S1, S2, S3, J1, J2, P](s1, s2, s3)
   def joinLeftInner[S1, S2, S3, J1 : Ordering, J2 : Ordering, P[_] : Lift](
     s1: DataSource[S1, P],
     s2: DataSource[S2, P],
     s3: DataSource[S3, P]
   ) = Joined3LeftInnerBinder[S1, S2, S3, J1, J2, P](s1, s2, s3)
+  def joinInnerLeft[S1, S2, S3, J1 : Ordering, J2 : Ordering, P[_] : Lift](
+    s1: DataSource[S1, P],
+    s2: DataSource[S2, P],
+    s3: DataSource[S3, P]
+  ) = Joined3InnerLeftBinder[S1, S2, S3, J1, J2, P](s1, s2, s3)
   def joinLeftLeft[S1, S2, S3, J1 : Ordering, J2 : Ordering, P[_] : Lift](
     s1: DataSource[S1, P],
     s2: DataSource[S2, P],
     s3: DataSource[S3, P]
   ) = Joined3LeftLeftBinder[S1, S2, S3, J1, J2, P](s1, s2, s3)
+
+  // Four-way join permutations
+  def joinInnerLeftInner[S1, S2, S3, S4, J1 : Ordering, J2 : Ordering, J3 : Ordering, P[_] : Lift](
+    s1: DataSource[S1, P],
+    s2: DataSource[S2, P],
+    s3: DataSource[S3, P],
+    s4: DataSource[S4, P]
+  ) = Joined4InnerLeftInnerBinder[S1, S2, S3, S4, J1, J2, J3, P](s1, s2, s3, s4)
+  // etc
 
   def joinMulti[  //These come from parameters
     P[_] : Lift,
@@ -189,6 +199,7 @@ case class LeftJoinedBinder[L, R, J : Ordering, P[_] : Lift](
   }
 }
 
+// Three-way join permutations
 case class Joined3InnerInnerBinder[S1, S2, S3, J1 : Ordering, J2 : Ordering, P[_] : Lift](
   s1: DataSource[S1, P],
   s2: DataSource[S2, P],
@@ -196,15 +207,6 @@ case class Joined3InnerInnerBinder[S1, S2, S3, J1 : Ordering, J2 : Ordering, P[_
 ) extends SourceBinder[(S1, S2, S3), Joined3[S1, S2, S3, J1, J2, (S1, S2), (S1, S2, S3)], P] {
   def bind(j: Joined3[S1, S2, S3, J1, J2, (S1, S2), (S1, S2, S3)]): P[(S1, S2, S3)] = {
     implicitly[Lift[P]].liftJoinInnerInner(j)(s1.load, s2.load, s3.load)
-  }
-}
-case class Joined3InnerLeftBinder[S1, S2, S3, J1 : Ordering, J2 : Ordering, P[_] : Lift](
-  s1: DataSource[S1, P],
-  s2: DataSource[S2, P],
-  s3: DataSource[S3, P]
-) extends SourceBinder[(S1, S2, Option[S3]), Joined3[S1, S2, S3, J1, J2, (S1, S2), (S1, S2, Option[S3])], P] {
-  def bind(j: Joined3[S1, S2, S3, J1, J2, (S1, S2), (S1, S2, Option[S3])]): P[(S1, S2, Option[S3])] = {
-    implicitly[Lift[P]].liftJoinInnerLeft(j)(s1.load, s2.load, s3.load)
   }
 }
 case class Joined3LeftInnerBinder[S1, S2, S3, J1 : Ordering, J2 : Ordering, P[_] : Lift](
@@ -216,6 +218,15 @@ case class Joined3LeftInnerBinder[S1, S2, S3, J1 : Ordering, J2 : Ordering, P[_]
     implicitly[Lift[P]].liftJoinLeftInner(j)(s1.load, s2.load, s3.load)
   }
 }
+case class Joined3InnerLeftBinder[S1, S2, S3, J1 : Ordering, J2 : Ordering, P[_] : Lift](
+  s1: DataSource[S1, P],
+  s2: DataSource[S2, P],
+  s3: DataSource[S3, P]
+) extends SourceBinder[(S1, S2, Option[S3]), Joined3[S1, S2, S3, J1, J2, (S1, S2), (S1, S2, Option[S3])], P] {
+  def bind(j: Joined3[S1, S2, S3, J1, J2, (S1, S2), (S1, S2, Option[S3])]): P[(S1, S2, Option[S3])] = {
+    implicitly[Lift[P]].liftJoinInnerLeft(j)(s1.load, s2.load, s3.load)
+  }
+}
 case class Joined3LeftLeftBinder[S1, S2, S3, J1 : Ordering, J2 : Ordering, P[_] : Lift](
   s1: DataSource[S1, P],
   s2: DataSource[S2, P],
@@ -225,6 +236,24 @@ case class Joined3LeftLeftBinder[S1, S2, S3, J1 : Ordering, J2 : Ordering, P[_] 
     implicitly[Lift[P]].liftJoinLeftLeft(j)(s1.load, s2.load, s3.load)
   }
 }
+
+// Four-way join permutations
+case class Joined4InnerLeftInnerBinder[S1, S2, S3, S4, J1 : Ordering, J2 : Ordering, J3 : Ordering, P[_] : Lift](
+  s1: DataSource[S1, P],
+  s2: DataSource[S2, P],
+  s3: DataSource[S3, P],
+  s4: DataSource[S4, P]
+) extends SourceBinder[
+  (S1, S2, Option[S3], S4),
+  Joined4[S1, S2, S3, S4, J1, J2, J3, (S1, S2), (S1, S2, Option[S3]), (S1, S2, Option[S3], S4)],
+  P
+] {
+  def bind(j: Joined4[S1, S2, S3, S4, J1, J2, J3, (S1, S2), (S1, S2, Option[S3]), (S1, S2, Option[S3], S4)]): P[(S1, S2, Option[S3], S4)] = {
+    implicitly[Lift[P]].liftJoinInnerLeftInner(j)(s1.load, s2.load, s3.load, s4.load)
+  }
+}
+// etc
+
 
 case class MultiJoinedBinder[
   //These come from parameters
@@ -314,5 +343,4 @@ object DataSourcesToPipes {
       ds.load
     }
   }
-
 }

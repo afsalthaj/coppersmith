@@ -29,7 +29,8 @@ import Feature.Value
 // Would have preferred functor to be specified as P[_] : Functor, but upcoming code in
 // ContextFeatureSource.bindWithContext is unable to derive implicit Functor instance,
 // and needs to access it via the Lift instance instead.
-abstract class Lift[P[_]](implicit val functor: Functor[P]) {
+abstract class Lift[P[_]](implicit val functor: Functor[P])
+    extends commbank.coppersmith.generated.GeneratedLift[P] {
   def lift[S, V <: Value](f:Feature[S,V])(s: P[S]): P[FeatureValue[V]]
 
   def lift[S](fs: FeatureSet[S])(s: P[S]): P[FeatureValue[_]]

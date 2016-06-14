@@ -25,6 +25,9 @@ import au.com.cba.omnia.uniform.assembly.UniformAssemblyPlugin._
 object build extends Build {
   val maestroVersion = "2.20.0-20160520031836-e06bc75"
 
+  // Number of levels of joins supported
+  val maxGeneratedJoinSize = 4
+
   lazy val standardSettings =
     Defaults.coreDefaultSettings ++
     uniformPublicDependencySettings ++
@@ -64,6 +67,21 @@ object build extends Build {
           libraryDependencies ++= depend.testing(configuration = "test"),
           libraryDependencies ++= depend.omnia("maestro", maestroVersion)
       )
+   ++ Seq(
+      watchSources <++= baseDirectory map(path => (path / "../project/MultiwayJoinGenerator.scala").get),
+      sourceGenerators in Compile <+= (sourceManaged in Compile, streams) map { (outdir: File, s) =>
+        Seq(
+          ("GeneratedJoin.scala",     MultiwayJoinGenerator.generateJoined(maxGeneratedJoinSize)),
+          ("GeneratedLift.scala",     MultiwayJoinGenerator.generateLift(maxGeneratedJoinSize)),
+          ("GeneratedBindings.scala", MultiwayJoinGenerator.generateBindings(maxGeneratedJoinSize)),
+          ("GeneratedBinders.scala",  MultiwayJoinGenerator.generateBinders(maxGeneratedJoinSize))
+        ).map { case (fileName, content) =>
+          val genFile = outdir / s"$fileName"
+          IO.write(genFile, content)
+          genFile
+        }
+      }
+    )
   ).configs( IntegrationTest )
 
   lazy val scalding = Project(

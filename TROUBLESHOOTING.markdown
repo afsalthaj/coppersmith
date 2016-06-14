@@ -1,6 +1,15 @@
 Troubleshooting Coppersmith
 ===========================
 
+### Missing imports
+value featureSetBuilder is not a member of commbank.coppersmith.From
+value featureSetBuilder is not a member of commbank.coppersmith.Joined
+value featureSetBuilder is not a member of commbank.coppersmith.CompleteJoinHlFeatureSource
+
+=> import commbank.coppersmith.api.Coppersmith._
+or
+=> import commbank.coppersmith.api._, Coppersmith._
+
 ### Serialisation issues
 
 The functions that make up feature definitions must only refer to fully

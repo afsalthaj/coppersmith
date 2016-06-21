@@ -27,6 +27,7 @@ object build extends Build {
 
   // Number of levels of joins supported
   val maxGeneratedJoinSize = 4
+  lazy val joins = MultiwayJoinGenerator.generateJoinCode(maxGeneratedJoinSize)
 
   lazy val standardSettings =
     Defaults.coreDefaultSettings ++
@@ -71,10 +72,10 @@ object build extends Build {
       watchSources <++= baseDirectory map(path => (path / "../project/MultiwayJoinGenerator.scala").get),
       sourceGenerators in Compile <+= (sourceManaged in Compile, streams) map { (outdir: File, s) =>
         Seq(
-          ("GeneratedJoin.scala",     MultiwayJoinGenerator.generateJoined(maxGeneratedJoinSize)),
-          ("GeneratedLift.scala",     MultiwayJoinGenerator.generateLift(maxGeneratedJoinSize)),
-          ("GeneratedBindings.scala", MultiwayJoinGenerator.generateBindings(maxGeneratedJoinSize)),
-          ("GeneratedBinders.scala",  MultiwayJoinGenerator.generateBinders(maxGeneratedJoinSize))
+          ("GeneratedJoin.scala",     MultiwayJoinGenerator.generateJoined(joins)),
+          ("GeneratedLift.scala",     MultiwayJoinGenerator.generateLift(joins)),
+          ("GeneratedBindings.scala", MultiwayJoinGenerator.generateBindings(joins)),
+          ("GeneratedBinders.scala",  MultiwayJoinGenerator.generateBinders(joins))
         ).map { case (fileName, content) =>
           val genFile = outdir / s"$fileName"
           IO.write(genFile, content)
@@ -92,10 +93,17 @@ object build extends Build {
         ++ uniform.project("coppersmith-scalding", "commbank.coppersmith.scalding")
         ++ uniformThriftSettings
         ++ Seq(
-        libraryDependencies ++= depend.hadoopClasspath,
-        libraryDependencies ++= depend.omnia("maestro-test", maestroVersion, "test"),
-        libraryDependencies ++= depend.parquet()
-      )
+          libraryDependencies ++= depend.hadoopClasspath,
+          libraryDependencies ++= depend.omnia("maestro-test", maestroVersion, "test"),
+          libraryDependencies ++= depend.parquet()
+        )
+        ++ Seq(
+          sourceGenerators in Compile <+= (sourceManaged in Compile, streams) map { (outdir: File, s) =>
+            val genFile = outdir / "GeneratedScaldingLift.scala"
+            IO.write(genFile, MultiwayJoinGenerator.generateLiftScalding(joins))
+            Seq(genFile)
+          }
+        )
   ).dependsOn(core % "compile->compile;test->test")
 
   lazy val examples = Project(
@@ -146,6 +154,13 @@ object build extends Build {
         ++ Seq(
           libraryDependencies ++= depend.testing(configuration = "test"),
           libraryDependencies ++= depend.omnia("maestro-test", maestroVersion)
+        )
+        ++ Seq(
+          sourceGenerators in Compile <+= (sourceManaged in Compile, streams) map { (outdir: File, s) =>
+            val genFile = outdir / "GeneratedMemoryLift.scala"
+            IO.write(genFile, MultiwayJoinGenerator.generateLiftMemory(joins))
+            Seq(genFile)
+          }
         )
   ).dependsOn(core)
 

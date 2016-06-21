@@ -16,15 +16,16 @@ package commbank.coppersmith.scalding.lift
 
 import com.twitter.scalding._
 
-import commbank.coppersmith._, Feature.Value
-import commbank.coppersmith.scalding.ScaldingBoundFeatureSource
-
 import shapeless._
 import shapeless.ops.hlist.Prepend
 
+import commbank.coppersmith._, Feature.Value
+import commbank.coppersmith.scalding.ScaldingBoundFeatureSource
+import commbank.coppersmith.scalding.generated.GeneratedScaldingLift
+
 import ScaldingScalazInstances.typedPipeFunctor
 
-trait ScaldingLift extends Lift[TypedPipe] {
+trait ScaldingLift extends Lift[TypedPipe] with GeneratedScaldingLift {
 
   def lift[S, V <: Value](f:Feature[S,V])(s: TypedPipe[S]): TypedPipe[FeatureValue[V]] = {
     s.flatMap(s => f.generate(s))

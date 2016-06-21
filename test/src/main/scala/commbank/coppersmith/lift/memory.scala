@@ -31,52 +31,32 @@ trait MemoryLift extends Lift[List] {
     s.flatMap(s => fs.generate(s))
   }
 
-  // Three-way join permutations
-  def liftJoinInnerInner[S1, S2, S3, J1 : Ordering, J2 : Ordering](
-    joined3: Joined3[S1, S2, S3, J1, J2, (S1, S2), (S1, S2, S3)]
-  )(s1: List[S1], s2: List[S2], s3: List[S3]): List[(S1, S2, S3)] = sys.error("FIXME: Implement")
-  def liftJoinLeftInner[S1, S2, S3, J1 : Ordering, J2 : Ordering](
-    joined3: Joined3[S1, S2, S3, J1, J2, (S1, Option[S2]), (S1, Option[S2], S3)]
-  )(s1: List[S1], s2: List[S2], s3: List[S3]): List[(S1, Option[S2], S3)] = sys.error("FIXME: Implement")
-  def liftJoinInnerLeft[S1, S2, S3, J1 : Ordering, J2 : Ordering](
-    joined3: Joined3[S1, S2, S3, J1, J2, (S1, S2), (S1, S2, Option[S3])]
-  )(s1: List[S1], s2: List[S2], s3: List[S3]): List[(S1, S2, Option[S3])] = sys.error("FIXME: Implement")
-  def liftJoinLeftLeft[S1, S2, S3, J1 : Ordering, J2 : Ordering](
-    joined3: Joined3[S1, S2, S3, J1, J2, (S1, Option[S2]), (S1, Option[S2], Option[S3])]
-  )(s1: List[S1], s2: List[S2], s3: List[S3]): List[(S1, Option[S2], Option[S3])] = sys.error("FIXME: Implement")
-
-  // Four-way join permutations
-  def liftJoinInnerLeftInner[S1, S2, S3, S4, J1 : Ordering, J2 : Ordering, J3 : Ordering](
-    joined4: Joined4[S1, S2, S3, S4, J1, J2, J3, (S1, S2), (S1, S2, Option[S3]), (S1, S2, Option[S3], S4)]
-  )(s1: List[S1], s2: List[S2], s3: List[S3], s4: List[S4]): List[(S1, S2, Option[S3], S4)] = sys.error("FIXME: Implement")
-  // etc
-
   type +:[A <: HList, B] =  Prepend[A, B :: HNil]
 
-  def innerJoinNext[LeftSides <: HList, RightSide, J : Ordering, Out <: HList]
-  (l: LeftSides => J, r: RightSide => J )
-  (a:List[LeftSides], b: List[RightSide])
-  (implicit pp: Prepend.Aux[LeftSides, RightSide :: HNil, Out])
-  : List[Out] = {
+  def innerJoinNext[LeftSides <: HList, RightSide, J : Ordering, Out <: HList](
+    l: LeftSides => J,
+    r: RightSide => J
+  )(a:List[LeftSides],
+    b: List[RightSide]
+  )(implicit pp: Prepend.Aux[LeftSides, RightSide :: HNil, Out]): List[Out] = {
     val aMap: Map[J, List[LeftSides]] = a.groupBy(l)
     val bMap: Map[J, List[RightSide]] = b.groupBy(r)
 
-    val result = for {
-      (k1,v1) <- aMap.toList
-      (k2,v2) <- bMap.toList if k2 == k1
-      a <- v1
-      b <-v2
+    for {
+      (k1, v1) <- aMap.toList
+      (k2, v2) <- bMap.toList if k2 == k1
+      a        <- v1
+      b        <- v2
     } yield a :+ b
-
-    result
   }
 
 
-  override def leftJoinNext[LeftSides <: HList, RightSide, J : Ordering, Out <: HList]
-  (l: LeftSides => J, r: RightSide => J )
-  (as:List[LeftSides], bs: List[RightSide])
-  (implicit pp: Prepend.Aux[LeftSides, Option[RightSide] :: HNil, Out])
-  : List[Out] =
+  def leftJoinNext[LeftSides <: HList, RightSide, J : Ordering, Out <: HList](
+    l: LeftSides => J,
+    r: RightSide => J
+  )(as:List[LeftSides],
+    bs: List[RightSide]
+  )(implicit pp: Prepend.Aux[LeftSides, Option[RightSide] :: HNil, Out]): List[Out] =
     as.flatMap { a =>
       val leftKey = l(a)
       val rightValues = bs.filter {b => r(b) == leftKey}
@@ -87,9 +67,11 @@ trait MemoryLift extends Lift[List] {
       }
     }
 
-  def liftBinder[S, U <: FeatureSource[S, U], B <: SourceBinder[S, U, List]]
-    (underlying: U, binder: B, filter: Option[S => Boolean]) =
-      MemoryBoundFeatureSource(underlying, binder, filter)
+  def liftBinder[S, U <: FeatureSource[S, U], B <: SourceBinder[S, U, List]](
+    underlying: U,
+    binder: B,
+    filter: Option[S => Boolean]
+  ) = MemoryBoundFeatureSource(underlying, binder, filter)
 
   def liftFilter[S](p: List[S], f: S => Boolean) = p.filter(f)
 }
